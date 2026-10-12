@@ -3,9 +3,13 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePollStore } from './store'
+import { createPoll } from '@/server/src'
 
 export default function Page() {
-	const [options, setOptions] = useState([''])
+	type PollOption ={text:string, votes:number}
+	const [options, setOptions] = useState<PollOption[]>([
+		 {text: '', votes: 0}
+		])
 	const [question, setQuestion] = useState('')
 	const [description, setDesсription] = useState('')
 	const router = useRouter()
@@ -13,16 +17,16 @@ export default function Page() {
 
 	function handleChange(index : number, value : string){
 		const newOptions = [...options]
-		newOptions[index] = value
+		newOptions[index] = {text:value, votes:0}
 
 		if (value && index === options.length - 1) {
-			newOptions.push('')
+			newOptions.push({text:'', votes:0})
 		}
 		setOptions(newOptions)
 	}
-	function loggs(question:string,description:string,options:string[]){
-		const cleanOptions = options.filter(e => e != '')
-		poll.setPoll({question, description, options:cleanOptions})
+	async function loggs(question:string,description:string,options:PollOption[]){
+		const cleanOptions = options.filter(e => e.text.trim() != '')
+		await createPoll(question,description,cleanOptions)
 		
 	}
 	return (
@@ -75,7 +79,7 @@ export default function Page() {
 						<div className='w-full bg-white rounded-3xl pr-4 pl-2 py-4 flex flex-col gap-3'>
 							{options.map((value, index) => (
 								<div key={index} className='flex justify-center items-center '>
-									{value === '' ? (
+									{value.text === '' ? (
 										<button className='w-8 h-8 rounded-full flex items-center justify-center mr-2 relative'>
 											<div className='absolute w-0.5 h-4.5 bg-gray-500 rounded-lg'></div>
 											<div className='absolute w-0.5 h-4.5 bg-gray-500 rounded-lg rotate-90'></div>
@@ -99,7 +103,7 @@ export default function Page() {
 										}}
 										placeholder='Add an Option'
 									/>
-									{value && (
+									{value.text && (
 										<button
 											className='shrink-0 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center hover:bg-gray-100 active:scale-95 transition ml-2 relative '
 											type='button'
@@ -108,9 +112,9 @@ export default function Page() {
 
 												if (
 													newOptions.length === 0 ||
-													newOptions[newOptions.length - 1] !== ''
+													newOptions[newOptions.length - 1].text !== ''
 												) {
-													newOptions.push('')
+													newOptions.push({text:'',votes:0})
 												}
 
 												setOptions(newOptions)
